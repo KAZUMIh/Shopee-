@@ -26,6 +26,12 @@
   <label>プラットフォーム手数料(%)
     <input type="number" id="platformFee" value="10">
   </label>
+  <label>SGD 為替バッファー(円)
+    <input type="number" id="bufferSGD" value="2">
+  </label>
+  <label>PHP 為替バッファー(円)
+    <input type="number" id="bufferPHP" value="2">
+  </label>
   <button onclick="calculateSellPrice()">売値を計算</button>
   <div id="result">
     売値(円) ≒ ¥0
@@ -35,9 +41,16 @@
   </div>
 
 <script>
-  async function fetchRate(from, to) {
+    // JPYベースで為替取得
+  async function fetchRate(to) {
     try {
-      const res = await fetch(`https://api.exchangerate-api.com/v4/latest/${from}`);
+      const res = await fetch('https://api.exchangerate-api.com/v4/latest/JPY');
+      const json = await res.json();
+      return json.rates[to];
+    } catch {
+      return null;
+    }
+  }`);
       const json = await res.json();
       return json.rates[to];
     } catch {
@@ -59,9 +72,15 @@
     // 為替取得
     const rateSGD = await fetchRate('JPY','SGD');
     const ratePHP = await fetchRate('JPY','PHP');
+    const bufferSGD = parseFloat(document.getElementById('bufferSGD').value) || 0;
+    const bufferPHP = parseFloat(document.getElementById('bufferPHP').value) || 0;
 
-    const sellSGD = rateSGD ? (sellYen / rateSGD).toFixed(2) : 0;
-    const sellPHP = ratePHP ? (sellYen / ratePHP).toFixed(2) : 0;
+    // 厳しめレート適用
+    const effRateSGD = rateSGD ? rateSGD + bufferSGD : null;
+    const effRatePHP = ratePHP ? ratePHP + bufferPHP : null;
+
+    const sellSGD = effRateSGD ? (sellYen / effRateSGD).toFixed(2) : 0;
+    const sellPHP = effRatePHP ? (sellYen / effRatePHP).toFixed(2) : 0;
 
     const profit = sellYen - targetGross - (sellYen * pf);
 
