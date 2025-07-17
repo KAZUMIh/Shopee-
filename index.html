@@ -7,7 +7,7 @@
   <style>
     body { font-family: sans-serif; max-width: 400px; margin: 2rem auto; padding: 1rem; border: 1px solid #ccc; border-radius: 8px; }
     label { display: block; margin-top: 1rem; }
-    input, button, select { width: 100%; padding: 0.5rem; box-sizing: border-box; margin-top: 0.5rem; }
+    input, button { width: 100%; padding: 0.5rem; box-sizing: border-box; margin-top: 0.5rem; }
     button { margin-top: 1rem; }
     #result { margin-top: 1.5rem; font-weight: bold; white-space: pre-line; }
   </style>
@@ -26,12 +26,6 @@
   <label>プラットフォーム手数料(%)
     <input type="number" id="platformFee" value="10">
   </label>
-  <label>SGD 為替バッファー(円)
-    <input type="number" id="bufferSGD" value="2">
-  </label>
-  <label>PHP 為替バッファー(円)
-    <input type="number" id="bufferPHP" value="2">
-  </label>
   <button onclick="calculateSellPrice()">売値を計算</button>
   <div id="result">
     売値(円) ≒ ¥0
@@ -41,16 +35,10 @@
   </div>
 
 <script>
-    // JPYベースで為替取得
+  // JPYベースで為替取得
   async function fetchRate(to) {
     try {
       const res = await fetch('https://api.exchangerate-api.com/v4/latest/JPY');
-      const json = await res.json();
-      return json.rates[to];
-    } catch {
-      return null;
-    }
-  }`);
       const json = await res.json();
       return json.rates[to];
     } catch {
@@ -61,26 +49,20 @@
   async function calculateSellPrice() {
     const cost = parseFloat(document.getElementById('costYen').value) || 0;
     const shipping = parseFloat(document.getElementById('shipping').value) || 0;
-    const margin = parseFloat(document.getElementById('margin').value)/100;
-    const pf = parseFloat(document.getElementById('platformFee').value)/100;
+    const margin = parseFloat(document.getElementById('margin').value) / 100;
+    const pf = parseFloat(document.getElementById('platformFee').value) / 100;
 
-    // 必要売価(税抜円)
+    // 必要売価 (税抜 円)
     const targetGross = cost + shipping;
     const netTarget = targetGross / (1 - pf);
     const sellYen = netTarget / (1 - margin);
 
     // 為替取得
-    const rateSGD = await fetchRate('JPY','SGD');
-    const ratePHP = await fetchRate('JPY','PHP');
-    const bufferSGD = parseFloat(document.getElementById('bufferSGD').value) || 0;
-    const bufferPHP = parseFloat(document.getElementById('bufferPHP').value) || 0;
+    const rateSGD = await fetchRate('SGD');
+    const ratePHP = await fetchRate('PHP');
 
-    // 厳しめレート適用
-    const effRateSGD = rateSGD ? rateSGD + bufferSGD : null;
-    const effRatePHP = ratePHP ? ratePHP + bufferPHP : null;
-
-    const sellSGD = effRateSGD ? (sellYen / effRateSGD).toFixed(2) : 0;
-    const sellPHP = effRatePHP ? (sellYen / effRatePHP).toFixed(2) : 0;
+    const sellSGD = rateSGD ? (sellYen / rateSGD).toFixed(2) : 0;
+    const sellPHP = ratePHP ? (sellYen / ratePHP).toFixed(2) : 0;
 
     const profit = sellYen - targetGross - (sellYen * pf);
 
