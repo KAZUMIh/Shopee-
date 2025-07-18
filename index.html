@@ -61,12 +61,11 @@
     const rateSGD = await fetchRate('SGD');
     const ratePHP = await fetchRate('PHP');
 
-        // 現在のレートは "1 JPY = x SGD" の形なので、JPYからSGDに変換するには掛け算
+    // JPYから現地通貨に換算 (掛け算)
     const sellSGD = rateSGD ? (sellYen * rateSGD).toFixed(2) : 0;
-    // 同様にPHPも掛け算
     const sellPHP = ratePHP ? (sellYen * ratePHP).toFixed(2) : 0;
-    const sellPHP = ratePHP ? (sellYen / ratePHP).toFixed(2) : 0;
 
+    // 利益額 (円)
     const profit = sellYen - targetGross - (sellYen * pf);
 
     document.getElementById('result').innerText =
